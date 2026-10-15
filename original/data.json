@@ -1,0 +1,134 @@
+{
+    "metadata": {
+        "mission": "Dancing with SARS - Lunar SAR & CLPS Control Center",
+        "team": "00000000A_LAGRANGE_NEXUS",
+        "version": "2.0.0-polygon-enhanced",
+        "total_targets": 5,
+        "total_psr_zones": 2,
+        "total_hazard_zones": 2
+    },
+    "targets": [
+        {
+            "id": "SAR-001",
+            "name": "Shackleton Crater Rim",
+            "lat": -89.9,
+            "lng": 0.0,
+            "polarization": "Circular (CPR = 1.42)",
+            "backscatter_db": "-2.4 dB",
+            "roughness": "Sehr hoch (Kraterrand)",
+            "ice_score": "89 %",
+            "illumination_pct": "86 %",
+            "slope_deg": "4.2° (Sicher)",
+            "thermal_k": "40 K bis 220 K",
+            "clps_suitability": "HOCHER WERT (Wassereis + Energie)"
+        },
+        {
+            "id": "SAR-002",
+            "name": "Cabeus Crater Floor",
+            "lat": -84.9,
+            "lng": -35.5,
+            "polarization": "Circular (CPR = 1.85)",
+            "backscatter_db": "-1.8 dB",
+            "roughness": "Dunkler Schattenbereich",
+            "ice_score": "94 %",
+            "illumination_pct": "12 %",
+            "slope_deg": "8.5° (Achtung)",
+            "thermal_k": "35 K bis 100 K",
+            "clps_suitability": "FORSCHUNGSZIEL (Kältefalle)"
+        },
+        {
+            "id": "SAR-003",
+            "name": "Madrigal Ridge",
+            "lat": -88.7,
+            "lng": -15.2,
+            "polarization": "Circular (CPR = 0.95)",
+            "backscatter_db": "-5.1 dB",
+            "roughness": "Moderat glatt",
+            "ice_score": "62 %",
+            "illumination_pct": "92 %",
+            "slope_deg": "2.1° (Optimal)",
+            "thermal_k": "110 K bis 240 K",
+            "clps_suitability": "OPTIMALER LANDESPUNKT"
+        },
+        {
+            "id": "SAR-004",
+            "name": "Tycho Crater Rim",
+            "lat": -43.3,
+            "lng": -11.2,
+            "polarization": "Linear Dual (HH/VV)",
+            "backscatter_db": "-12.1 dB",
+            "roughness": "Hohe Felsdichte",
+            "ice_score": "14 %",
+            "illumination_pct": "45 %",
+            "slope_deg": "14.8° (Hohes Risiko)",
+            "thermal_k": "100 K bis 380 K",
+            "clps_suitability": "GEFÄHRLICH (Steilhang)"
+        },
+        {
+            "id": "SAR-005",
+            "name": "Aristarchus Plateau",
+            "lat": 23.7,
+            "lng": -47.4,
+            "polarization": "Circular (CPR = 0.68)",
+            "backscatter_db": "-8.5 dB",
+            "roughness": "Vulkanischer Auswurf",
+            "ice_score": "31 %",
+            "illumination_pct": "50 %",
+            "slope_deg": "3.5° (Sicher)",
+            "thermal_k": "120 K bis 390 K",
+            "clps_suitability": "MITTLERES RISIKO"
+        }
+    ],
+    "psr_zones": [
+        {
+            "id": "PSR-SHACKLETON",
+            "name": "Shackleton PSR Kältefalle",
+            "cpr_value": 1.45,
+            "estimated_ice_depth_m": 1.8,
+            "coordinates": [
+                [-89.5, -20.0],
+                [-89.8, 30.0],
+                [-88.8, 60.0],
+                [-88.2, 10.0],
+                [-88.5, -40.0]
+            ]
+        },
+        {
+            "id": "PSR-CABEUS",
+            "name": "Cabeus Hauptkrater Eisdepot",
+            "cpr_value": 1.88,
+            "estimated_ice_depth_m": 3.2,
+            "coordinates": [
+                [-83.5, -50.0],
+                [-86.0, -20.0],
+                [-85.8, 10.0],
+                [-83.0, -10.0],
+                [-82.5, -40.0]
+            ]
+        }
+    ],
+    "hazard_zones": [
+        {
+            "id": "HAZARD-01",
+            "name": "Tycho Steilhang & Felsfeld",
+            "risk_type": "Kippgefahr (>12° Slope)",
+            "coordinates": [
+                [-41.0, -18.0],
+                [-45.5, -18.0],
+                [-45.5, -5.0],
+                [-41.0, -5.0]
+            ]
+        },
+        {
+            "id": "HAZARD-02",
+            "name": "Amundsen Kraterwand",
+            "risk_type": "Abschatten & Signalverlust",
+            "coordinates": [
+                [-83.0, 70.0],
+                [-85.5, 75.0],
+                [-85.0, 95.0],
+                [-82.5, 90.0]
+            ]
+        }
+    ]
+}

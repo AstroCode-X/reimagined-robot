@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Dancing with SARS – 2D/3D Moon with NASA LRO imagery, live JPL Horizons and Groq AI chat through a secure Cloudflare Worker.">
+<title>Dancing with SARS — LRO Moon, JPL Horizons & Groq AI Chat</title>
+<style>
+:root{--bg-dark:#04060a;--panel-bg:rgba(13,17,26,.96);--panel-border:rgba(0,240,255,.26);--accent-cyan:#00f0ff;--accent-green:#00ff88;--accent-amber:#ffb700;--accent-red:#ff3366;--text-main:#d1d9e6;--text-muted:#8a9bb1;--font-heading:Arial,sans-serif;--font-body:Arial,sans-serif;--font-mono:Consolas,'Courier New',monospace}
+*{box-sizing:border-box} html,body{width:100%;height:100%;margin:0;background:var(--bg-dark);color:var(--text-main);font:14px/1.45 var(--font-body)}body{display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit} button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:3px}
+.nasa-header{min-height:67px;width:100%;padding:10px 17px;background:linear-gradient(180deg,#090e18,#04060a);border-bottom:1px solid var(--panel-border);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;z-index:5;box-shadow:0 4px 20px rgba(0,240,255,.12)}
+.brand{display:flex;align-items:center;gap:11px}.brand h1{margin:0;color:var(--accent-cyan);text-shadow:0 0 13px rgba(0,240,255,.35);font-size:clamp(14px,1.6vw,20px);font-weight:800;letter-spacing:1.6px;text-transform:uppercase}.badge{border:1px solid var(--accent-cyan);background:rgba(0,240,255,.08);color:var(--accent-cyan);font:10px var(--font-mono);padding:5px 7px;letter-spacing:.6px}.pulse-dot{width:9px;height:9px;background:var(--accent-green);border-radius:50%;box-shadow:0 0 12px var(--accent-green);animation:pulse 1.8s infinite}@keyframes pulse{50%{opacity:.45;transform:scale(.7)}}
+.telemetry-bar{display:flex;align-items:center;flex-wrap:wrap;gap:14px;font:11px var(--font-mono)}.metric{color:var(--text-muted)}.metric strong{color:var(--accent-cyan)}.btn-briefing,.small-button{color:#defaff;border:1px solid var(--accent-cyan);background:rgba(0,240,255,.08);padding:8px 11px;border-radius:4px;font:11px var(--font-mono)}.btn-briefing:hover,.small-button:hover{background:rgba(0,240,255,.21)}
+.dashboard-container{display:flex;flex:1;min-height:0;position:relative}.sidebar{flex:0 0 408px;width:408px;max-width:48%;background:var(--panel-bg);border-right:1px solid var(--panel-border);display:flex;flex-direction:column;gap:10px;padding:13px;overflow-y:auto;z-index:3;box-shadow:5px 0 25px rgba(0,0,0,.5)}
+.panel{background:rgba(10,15,25,.85);border:1px solid var(--panel-border);border-radius:6px;padding:12px}.panel-header{display:flex;justify-content:space-between;align-items:center;gap:5px;border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:10px;padding-bottom:8px}.panel h2{font-size:11px;font-family:var(--font-heading);font-weight:800;letter-spacing:1.1px;margin:0;color:var(--accent-cyan);text-transform:uppercase}.meta{font:10px var(--font-mono);color:var(--accent-amber)}
+.layer-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}.layer-btn,.moon-mode,.pill-btn{border:1px solid var(--panel-border);background:rgba(255,255,255,.04);padding:8px 4px;color:var(--text-main);border-radius:4px;font:10px var(--font-mono);text-align:center}.layer-btn.active,.moon-mode.active,.pill-btn.active{background:rgba(0,240,255,.18);border-color:var(--accent-cyan);color:#fff}.panel-note{color:var(--text-muted);font:10.5px/1.5 var(--font-mono);margin-top:8px}
+#viewport-3d-box{height:197px;background:radial-gradient(ellipse at center,#13253b 0%,#020305 67%);border:1px solid var(--panel-border);border-radius:5px;position:relative;overflow:hidden;cursor:grab}#viewport-3d-box:active{cursor:grabbing}#canvas-3d{width:100%;height:100%;display:block;touch-action:none}.viewport-overlay{position:absolute;top:8px;left:10px;pointer-events:none;font:10px var(--font-mono);color:#8aebfa;text-shadow:0 1px 3px #000}.viewport-bottom{position:absolute;bottom:9px;right:9px;pointer-events:none;color:#99b5c5;font:10px var(--font-mono)}
+.ai-score-row{display:flex;align-items:center;gap:14px;margin:5px 0}.ai-score-num{font:700 37px var(--font-mono);color:var(--accent-green);white-space:nowrap}.ai-score-num small{font-size:14px}.ai-desc{font:11px/1.5 var(--font-mono);color:#b3c4d7}.ai-bar-track{height:7px;background:#213043;border-radius:4px;overflow:hidden}.ai-bar-fill{height:100%;background:linear-gradient(90deg,#e85c73,#ffcc55,#00e89d);width:0;transition:width .3s}.ai-factors{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px;font:10px/1.4 var(--font-mono)}.ai-factor{background:rgba(255,255,255,.035);padding:7px;border:1px solid rgba(170,220,250,.09)}.ai-factor b{display:block;color:#f7faff;font-size:11px}.ai-disclaimer{font:10px/1.5 var(--font-mono);color:#dfb46e;border-left:2px solid var(--accent-amber);padding-left:8px;margin:11px 0 0}.ai-recommendation{color:var(--accent-cyan);font:11px/1.5 var(--font-mono);margin-top:8px}
+.data-row{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:12px}.data-label{color:var(--text-muted)}.data-value{color:var(--accent-cyan);font:11px var(--font-mono);text-align:right}.data-row.warn .data-value{color:var(--accent-amber)}
+.control-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}.field span{display:block;color:var(--text-muted);font:10px var(--font-mono);margin-bottom:4px}.field input,.field select{width:100%;background:#121e30;color:#d6ebf8;border:1px solid #2b4c60;border-radius:4px;padding:7px;font:11px var(--font-mono);min-width:0}.time-label{font:11px var(--font-mono);color:var(--accent-cyan);text-align:center;margin:8px 0}.range{width:100%;accent-color:var(--accent-cyan)}.source-note{padding:8px;background:rgba(255,183,0,.06);border:1px solid rgba(255,183,0,.28);color:#ecc383;font:10px/1.4 var(--font-mono);margin-top:7px}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font:10px/1.4 var(--font-mono);white-space:nowrap}th{color:#93a9c0;font-weight:normal;text-align:left}td,th{padding:5px 2px;border-bottom:1px solid #1d2a39}td.num{color:var(--accent-cyan)}tr.selected td{background:rgba(0,240,255,.08)}tr[role=button]{cursor:pointer}#chart{width:100%;height:135px;display:block}
+.map-viewport{flex:1;min-width:0;position:relative;overflow:hidden;background:#030509}.main-background{position:absolute;inset:0;overflow:hidden}.main-background canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}#moon-full-canvas{cursor:grab}#moon-full-canvas:active{cursor:grabbing}.map-controls{position:absolute;top:14px;left:15px;display:flex;flex-wrap:wrap;gap:6px;z-index:2;padding-right:15px}.map-modes{display:flex;gap:5px}.moon-mode{padding:9px 12px;background:rgba(9,17,27,.9);color:#d8f5ff}.map-legend{position:absolute;right:15px;top:14px;max-width:220px;background:rgba(4,10,18,.9);border:1px solid rgba(0,240,255,.22);border-radius:5px;padding:10px;color:#bcd5e7;font:11px/1.8 var(--font-mono)}.map-legend strong{color:var(--accent-cyan);display:block;margin-bottom:3px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}.map-caption{position:absolute;left:18px;bottom:15px;color:#b5c8d7;font:11px/1.5 var(--font-mono);text-shadow:0 1px 4px black;background:rgba(5,10,15,.85);padding:7px 9px;max-width:80%}.map-footer{position:absolute;right:17px;bottom:17px;display:flex;gap:6px}.key-bubble{border:1px solid #396174;background:rgba(5,12,23,.95);color:#bbdce9;border-radius:4px;padding:5px 9px}.hidden{display:none!important}
+.modal-overlay{position:fixed;inset:0;background:rgba(1,3,8,.9);display:none;align-items:center;justify-content:center;z-index:15;padding:15px}.modal-overlay.active{display:flex}.modal-card{width:min(690px,100%);max-height:90vh;overflow:auto;background:#0c121e;border:1px solid var(--accent-cyan);border-radius:8px;padding:20px;box-shadow:0 0 35px rgba(0,240,255,.19)}.modal-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--panel-border);margin-bottom:12px}.modal-header h2{font-size:17px;color:var(--accent-cyan)}.close-btn{background:transparent;border:0;color:#cceeff;font-size:25px}.modal-body{font-size:13px;color:#b9cae0;line-height:1.6}.modal-body h3{font-size:13px;color:var(--accent-amber);margin:18px 0 5px}.modal-body a{color:var(--accent-cyan)}
+@media (max-width:1000px){.sidebar{flex-basis:360px;width:360px;max-width:50%}.telemetry-bar{font-size:10px}.map-legend{top:auto;bottom:64px}.map-controls{top:10px;left:10px}.moon-mode{padding:8px 6px}}
+@media (max-width:730px){body{overflow-y:auto;height:auto;min-height:100dvh}.nasa-header{padding:11px}.dashboard-container{flex-direction:column}.sidebar{flex:none;max-width:none;width:100%;order:2;overflow:visible}.map-viewport{flex:none;width:100%;height:450px;order:1}.map-legend{right:9px;top:59px;bottom:auto;font-size:10px;max-width:155px}.map-caption{bottom:8px;left:8px;font-size:9px}.map-modes{flex-wrap:wrap}.moon-mode{font-size:9px;padding:8px 6px}.map-footer{bottom:12px}.control-grid{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce){.pulse-dot{animation:none}}
+
+/* Live science data and chat preserve the original Mission Control layout. */
+.live-indicator{font:10px var(--font-mono);color:var(--accent-amber)}.live-indicator.ready{color:var(--accent-green)}
+.chat-toggle{background:rgba(0,240,255,.16);border:1px solid var(--accent-cyan);color:#f6ffff;padding:8px 13px;border-radius:5px;font:700 11px var(--font-mono)}
+.chat-toggle:hover{background:rgba(0,240,255,.28)}
+.chat-drawer{position:fixed;right:20px;bottom:18px;z-index:12;width:min(410px,calc(100vw - 28px));height:min(610px,calc(100dvh - 100px));background:#0a121f;border:1px solid #38b6d6;border-radius:10px;box-shadow:0 18px 60px #000c,0 0 25px #00f0ff20;display:flex;flex-direction:column;overflow:hidden}
+.chat-drawer.hidden{display:none!important}
+.chat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#101f30;padding:13px 15px;border-bottom:1px solid #28556a}
+.chat-head h2{margin:0;color:#00f0ff;font:700 14px var(--font-mono)}
+.chat-head small{color:#abc0d1;font:10px var(--font-mono)}
+.chat-messages{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:10px}
+.chat-message{padding:11px 12px;font:12px/1.6 Arial,sans-serif;border:1px solid #214059;white-space:pre-wrap;overflow-wrap:anywhere;max-width:96%;border-radius:8px}
+.chat-message.assistant{align-self:flex-start;background:#122436;color:#e0f7fd}
+.chat-message.user{align-self:flex-end;background:#07383e;color:#ecffff;border-color:#167988}
+.chat-footer{padding:12px;border-top:1px solid #2b4355;background:#0e1c29}
+.chat-input-line{display:flex;gap:8px;align-items:flex-end}
+.chat-input-line textarea{flex:1;min-width:0;resize:vertical;max-height:115px;min-height:60px;color:#e8f6ff;background:#0a1420;border:1px solid #36647c;border-radius:6px;padding:9px;font:12px/1.5 Arial,sans-serif}
+.chat-input-line button{border:1px solid #00f0ff;background:#004351;color:#fff;border-radius:5px;padding:12px;font:700 11px var(--font-mono)}
+.chat-note{font:10px/1.5 var(--font-mono);color:#a0b1c8;margin:8px 0 0}
+.chat-suggestions{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px 10px}
+.chat-suggestions button{border:1px solid #30627c;background:#102536;color:#d0ebf5;padding:6px 8px;border-radius:5px;font:10px var(--font-mono)}
+.panel-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.data-note{font:10px/1.5 var(--font-mono);color:#f2c98d;border-left:2px solid var(--accent-amber);padding-left:7px;margin:8px 0 0}
+@media (max-width:730px){.chat-drawer{right:7px;bottom:7px;width:calc(100vw - 14px);height:min(580px,calc(100dvh - 24px))}.chat-toggle{font-size:10px}}
+/* Detailed, opt-in connection diagnosis and language documentation */
+.status-message{font:11px/1.6 var(--font-mono);white-space:pre-line;color:#c7dfed;border-left:3px solid #2c8aa5;background:#0c1827;padding:9px 11px;overflow-wrap:anywhere}
+.status-message.ok{border-left-color:#00ff88}.status-message.bad{border-left-color:#ffb700}
+.status-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;font:11px var(--font-mono)}.status-links a{color:#69eafa}
+</style>
+</head>
+<body>
+<header class="nasa-header">
+ <div class="brand"><div class="pulse-dot" aria-hidden="true"></div><h1>Dancing with SARS</h1><span class="badge">CLPS MISSION DASHBOARD</span></div>
+ <div class="telemetry-bar"><span class="metric">LAT: <strong id="telemetry-lat">−89.90°</strong></span><span class="metric">LNG: <strong id="telemetry-lng">0.00°</strong></span><span class="metric">MODE: <strong id="top-mode">MODELL / DEMO</strong></span><span class="metric">KI: <strong>LOCAL ML + GROQ CHAT</strong></span></div>
+ <button type="button" class="chat-toggle" id="chat-open">✦ KI CHAT ÖFFNEN</button><button type="button" class="btn-briefing" id="briefing-open">CLPS BRIEFING</button><a class="small-button" href="docs/guide.html" target="_blank" rel="noopener">? HILFE / HELP</a>
+</header>
+<div class="dashboard-container">
+ <aside class="sidebar" aria-label="Mission control side panels">
+  <section class="panel">
+   <div class="panel-header"><h2>SAR Radar-Ebenen</h2><span class="meta">INTERAKTIV</span></div>
+   <div class="layer-row"><button type="button" class="layer-btn active" data-layer="cpr">Mini-RF / CPR</button><button type="button" class="layer-btn" data-layer="roughness">Gefahren</button><button type="button" class="layer-btn" data-layer="optical">Mondkarte</button></div>
+   <div class="panel-note">NASA-LRO-Bildmosaik wird online vom Worker geladen. PSR-, Hazard- und CPR-Zonen stammen weiterhin aus dem Original-Prototyp und sind keine validierte SAR-Schicht.</div>
+  </section>
+  <section class="panel">
+   <div class="panel-header"><h2>3D Orbitale Mondansicht</h2><span class="meta">WEBGL REALTIME</span></div>
+   <div id="viewport-3d-box"><canvas id="canvas-3d" aria-label="Drehbarer 3D-Mond"></canvas><span class="viewport-overlay" id="3d-status">LUNAR ORBIT: ACTIVE</span><span class="viewport-bottom">ZIEHEN ZUM DREHEN ↔</span></div>
+   <div class="panel-note" id="texture-note">Mond lädt NASA LRO WAC-Textur vom Worker; bis dahin offline gespeicherte illustrative Fallback-Grafik. Ziel auf der Karte anklicken.</div>
+  </section>
+  <section class="panel" id="ai-panel">
+   <div class="panel-header"><h2>KI Mission Analyst</h2><span class="meta" style="color:var(--accent-green)">ML INFERENCE ●</span></div>
+   <div class="ai-score-row"><div class="ai-score-num" id="ai-score">—<small> / 100</small></div><div class="ai-desc"><b id="ai-site" style="color:#fff">Shackleton Crater Rim</b><div id="ai-status">Berechnung der Demo-Bewertung...</div></div></div>
+   <div class="ai-bar-track"><div id="ai-bar" class="ai-bar-fill"></div></div>
+   <div id="ai-factors" class="ai-factors"></div>
+   <div class="ai-recommendation" id="ai-recommendation"></div>
+   <p class="ai-disclaimer">Lokaler ML-SCORE ist eine synthetische Demonstration, KEINE echte Sicherheitswahrscheinlichkeit. Für Fragen und Erklärungen nutze den neuen Groq-KI-Chat.</p><div class="panel-actions"><button type="button" class="small-button" id="ai-open-chat">✦ MIT KI SPRECHEN</button></div>
+  </section>
+  <section class="panel" id="api-diagnostics">
+   <div class="panel-header"><h2>Worker / NASA / KI Status</h2><span class="meta" id="worker-badge">CHECK</span></div>
+   <div id="worker-message" class="status-message">Verbindung wird geprüft. NASA-Ephemeriden benötigen den Worker; Demo-Messwerte sind ausdrücklich nicht echt.</div>
+   <div class="panel-actions"><button type="button" class="small-button" id="worker-check">↻ VERBINDUNG PRÜFEN</button></div>
+   <div class="status-links"><a href="https://apikey.elias256.workers.dev/health" target="_blank" rel="noopener">Worker /health ↗</a><a href="docs/guide.html" target="_blank" rel="noopener">Anleitung DE/EN ↗</a></div>
+  </section>
+  <section class="panel">
+   <div class="panel-header"><h2>CLPS Ziel-Messwerte</h2><span class="meta" id="target-id">SAR-001</span></div>
+   <div class="data-row"><span class="data-label">Landeplatz:</span><span class="data-value" id="val-name">Shackleton Crater Rim</span></div>
+   <div class="data-row"><span class="data-label">Koordinaten:</span><span class="data-value" id="val-coords">−89.90°, 0°</span></div>
+   <div class="data-row"><span class="data-label">Eis-Score (Demo / NICHT NASA):</span><span class="data-value" id="val-ice">89 %</span></div>
+   <div class="data-row"><span class="data-label">Original-Lichtwert (Demo):</span><span class="data-value" id="val-solar">86 %</span></div>
+   <div class="data-row"><span class="data-label">Hangneigung (Demo / NICHT NASA):</span><span class="data-value" id="val-slope">4.2°</span></div>
+   <div class="data-row"><span class="data-label">Temperatur (Demo / NICHT NASA):</span><span class="data-value" id="val-thermal">40 K bis 220 K</span></div>
+   <div class="data-row"><span class="data-label">SAR-Rückstreuung (Demo / NICHT NASA):</span><span class="data-value" id="val-backscatter">−2.4 dB</span></div>
+   <div class="data-row warn"><span class="data-label">Vorherige CLPS-Einschätzung:</span><span class="data-value" id="val-clps">HOCHER WERT</span></div>
+  </section>
+  <section class="panel">
+   <div class="panel-header"><h2>CLPS Sonne &amp; Erdkommunikation</h2><span class="meta" id="data-badge">JPL LIVE · LADEN</span></div>
+   <div class="control-grid"><label class="field"><span>START UTC</span><input type="datetime-local" id="start-time" value="2026-11-14T00:00"></label><label class="field"><span>ZEITFENSTER</span><select id="duration"><option value="24">24 Stunden</option><option value="72">3 Tage</option><option value="168" selected>7 Tage</option></select></label></div>
+   <input type="range" class="range" id="time-scrubber" min="0" max="168" value="0" aria-label="Zeitpunkt im Missionsfenster"><div class="time-label" id="epoch-display">14.11.2026 00:00 UTC</div>
+   <div class="data-row"><span class="data-label">Sonne über Horizont:</span><span class="data-value" id="sun-now">—</span></div><div class="data-row"><span class="data-label">Erde über Horizont:</span><span class="data-value" id="earth-now">—</span></div>
+   <canvas id="chart" aria-label="Zeitdiagramm für Sonnen- und Erdhöhe"></canvas>
+   <div class="table-wrap"><table aria-label="Missionsvergleich"><thead><tr><th>STANDORT</th><th>SONNE ↑</th><th>ERDE ↑</th><th>BEIDE ↑</th></tr></thead><tbody id="comparison-body"></tbody></table></div>
+   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px"><button type="button" id="load-nasa" class="small-button">↻ JPL LIVE LADEN</button><button type="button" id="load-all-nasa" class="small-button">ALLE ORTE LADEN</button><button type="button" id="export-csv" class="small-button">ZEITREIHE CSV</button><button type="button" class="small-button" id="import-btn">JPL JSON IMPORT</button><button type="button" class="small-button" id="demo-mode">DEMO-WERTE</button><input id="import-file" type="file" accept=".json,application/json" hidden></div>
+   <div class="source-note" id="source-note">JPL Horizons wird über den Cloudflare Worker abgerufen. Bei Fehlern stehen N/A statt erfundener Werte.</div><p class="data-note">Geometrischer Horizont ohne lokale Geländeabschattung. 5 Koordinaten aus deinem ursprünglichen Prototyp; keine bestätigten NASA-Landeplätze.</p>
+  </section>
+ </aside>
+ <main class="map-viewport" aria-label="Interaktive Mondansicht">
+  <div class="main-background"><canvas id="moon-map" aria-label="Interaktive Mondkarte mit Zielmarkierungen"></canvas><canvas id="moon-full-canvas" class="hidden" aria-label="Große interaktive 3D Mondansicht"></canvas></div>
+  <div class="map-controls"><div class="map-modes"><button type="button" class="moon-mode active" data-view="polar">2D SÜDPOL</button><button type="button" class="moon-mode" data-view="global">2D GANZER MOND</button><button type="button" class="moon-mode" data-view="globe">3D MOND</button></div></div>
+  <div class="map-legend"><strong>LUNAR MISSION MAP</strong><div><i class="dot" style="background:#00f0ff"></i>CLPS-Zielpunkt</div><div><i class="dot" style="background:#35ffcf"></i>PSR · Demo-Overlay</div><div><i class="dot" style="background:#ff3366"></i>Gefahren (Demo)</div><div style="margin-top:6px;color:#e7b77e">Textur: NASA LRO (nach Laden) · Zonen: DEMO</div></div>
+  <div class="map-caption" id="map-caption">SÜDPOL / NASA LRO WAC (ONLINE) · PSR-OVERLAYS SIND DEMO</div>
+  <div class="map-footer"><button type="button" class="key-bubble" id="map-zoom-in" aria-label="Karte vergrößern">＋</button><button type="button" class="key-bubble" id="map-zoom-out" aria-label="Karte verkleinern">−</button></div>
+ </main>
+</div>
+<section id="chat-drawer" class="chat-drawer hidden" role="dialog" aria-label="Groq KI Mission Chat" aria-modal="false">
+ <div class="chat-head"><div><h2>✦ GROQ MISSION CHAT</h2><small id="chat-status">Cloudflare Worker · kein API-Key im Browser</small></div><button class="small-button" id="chat-close" type="button" aria-label="Chat schließen">✕</button></div>
+ <div id="chat-messages" class="chat-messages" aria-live="polite"><div class="chat-message assistant">Hallo! Frag mich etwas über den Mond, deine Missionsdaten oder den Vergleich der Landeplätze. Ich kennzeichne Demo-Werte und NASA-Daten getrennt.</div></div>
+ <div class="chat-suggestions"><button type="button" data-question="Wie gut ist der aktuell gewählte Landeplatz für Solarenergie und Funkverbindung?">Standort analysieren</button><button type="button" data-question="Wie funktioniert SAR und warum beweist CPR kein Wassereis?">SAR erklären</button><button type="button" data-question="Was zeigen die JPL-Horizons-Winkel in meinem Dashboard?">JPL-Daten erklären</button></div>
+ <form id="chat-form" class="chat-footer"><div class="chat-input-line"><textarea id="chat-input" aria-label="Frage an die KI" maxlength="1800" placeholder="Frag die KI etwas über die Mission ..." required></textarea><button type="submit" id="chat-send">SENDEN ↗</button></div><p class="chat-note">Antworten von Groq (Llama) · können Fehler enthalten · keine NASA-Autorität. Der Worker erhält deine Chattexte und den Dashboard-Kontext.</p></form>
+</section>
+<div class="modal-overlay" id="briefing-modal" role="dialog" aria-modal="true" aria-label="Mission briefing"><div class="modal-card"><div class="modal-header"><h2>CLPS Mission &amp; KI Briefing</h2><button type="button" id="briefing-close" class="close-btn" aria-label="Schließen">×</button></div><div class="modal-body">
+ <h3>Was von deinem Original erhalten blieb</h3><p>Dancing with SARS bleibt ein interaktives Control Center mit 2D-Mondkarte, PSR- und Hazard-Polygonen, Telemetrie, frei drehbarer 3D-Mondansicht und fünf Zielpunkten aus deinen Originaldateien.</p>
+ <h3>Chat-KI über Groq und Cloudflare</h3><p>Der KI-Chat verwendet Groq Llama 3.3 70B über den von dir selbst deployten Cloudflare Worker. Der API-Key wird als Worker-Secret gespeichert und niemals in den HTML-Code eingetragen. Der Chat sieht nur die übergebenen UI-Werte, nicht automatisch weitere NASA-Datensätze. Das synthetische lokale ML-Modell bleibt ein getrenntes Demo-Feature.</p><h3>KI – was sie kann und was nicht</h3><p>Das lokale, vollständig offline ausführbare Modell ist eine logistische Regression, die anhand von synthetischen Beispieldaten trainiert wurde. Inputs: Hangneigung, Prozent der Stunden mit Sonne über dem geometrischen Horizont, Prozent der Stunden mit Erde über dem Horizont und Demonstrations-Temperaturwert. Der 0–100-Score bewertet ausschließlich ein didaktisches Szenario und ist keine validierte Wahrscheinlichkeit für eine sichere Landung. Das Modell leitet auch keine Wassereiswahrscheinlichkeit aus CPR ab.</p>
+ <h3>Missionsbrowser</h3><p>Zeitraum, Datum und Zielpunkt verändern die Berechnungen. Im Standardmodus lädt die App echte NASA/JPL-Horizons-Winkel über den Worker; falls nicht erreichbar, werden fehlende Werte als N/A gezeigt. Ein ausdrücklich vereinfachtes periodisches Modell ist nur über „DEMO-WERTE“ verfügbar. Der JSON-Import akzeptiert die vom mitgelieferten JPL-Horizons-Skript erzeugte Zeitreihe. Fehlende JPL-Werte werden niemals durch geschätzte Werte ersetzt.</p>
+ <h3>Wissenschaftliche Einschränkungen</h3><p>Bei erreichbarem Worker wird das echte NASA-LRO-WAC-Bildmosaik geladen; bei Fehlern gibt es eine illustrative Fallback-Grafik. Die ursprünglichen SAR-, Eis-, Hang- und Temperaturscores sind Beispielwerte. CPR allein beweist keinen Wassereisfund. Sonnen- und Erdsicht berücksichtigen keine lokale Geländeabschattung oder Funkhardware. Alle fünf Standorte sind Demo-Koordinaten, keine bestätigten CLPS-Landeplätze.</p>
+ <h3>Quellen und nächster Schritt</h3><p><a href="https://svs.gsfc.nasa.gov/4720" target="_blank" rel="noopener">NASA SVS CGI Moon Kit</a> (LROC-Bildtextur, visualisiert, keine quantitative Karte), <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" rel="noopener">NASA/JPL Horizons</a> (Ephmeriden). Echte LRO/LOLA-Höhendaten und validierte Missionsfälle vor einer wissenschaftlichen Einreichung ergänzen.</p>
+</div></div></div>
+<script src="assets/default-data.js"></script><script src="assets/ml-model.js"></script><script src="assets/astro.js"></script><script src="assets/moon-webgl.js"></script><script src="assets/app.js"></script><script src="assets/worker-diagnostics.js"></script><script src="assets/chat.js"></script>
+</body></html>

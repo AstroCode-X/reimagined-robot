@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apikey",
+  "main": "worker.js",
+  "compatibility_date": "2026-10-15",
+  "vars": {
+    "ALLOWED_ORIGINS": "http://localhost:8000,http://127.0.0.1:8000"
+  },
+  "ratelimits": [
+    { "name": "CHAT_RATE_LIMITER", "namespace_id": "202601", "simple": { "limit": 8, "period": 60 } },
+    { "name": "DATA_RATE_LIMITER", "namespace_id": "202602", "simple": { "limit": 25, "period": 60 } }
+  ]
+}
